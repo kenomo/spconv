@@ -11,7 +11,7 @@ from torch.utils import data
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets, transforms
 
-import spconv
+import spconv.pytorch
 from spconv.test_utils import generate_sparse_data
 
 
@@ -51,57 +51,51 @@ class FakeSparseDataset(Dataset):
 class FakeClassifier(nn.Module):
     def __init__(self):
         super().__init__()
-        self.net = spconv.SparseSequential(
-            spconv.SubMConv3d(3,
+        self.net = spconv.pytorch.SparseSequential(
+            spconv.pytorch.SubMConv3d(3,
                               8,
                               3,
                               indice_key="subm1",
-                              padding=1,
-                              use_hash=False),
+                              padding=1),
             nn.BatchNorm1d(8),
             nn.ReLU(),
-            spconv.SparseConv3d(8, 16, 3, stride=2, padding=1, use_hash=False),
+            spconv.pytorch.SparseConv3d(8, 16, 3, stride=2, padding=1),
             nn.BatchNorm1d(16),
             nn.ReLU(),
-            spconv.SubMConv3d(16,
+            spconv.pytorch.SubMConv3d(16,
                               16,
                               3,
                               indice_key="subm2",
-                              padding=1,
-                              use_hash=False),
+                              padding=1),
             nn.BatchNorm1d(16),
             nn.ReLU(),
-            spconv.SparseConv3d(16, 32, 3, stride=2, padding=1,
-                                use_hash=False),
+            spconv.pytorch.SparseConv3d(16, 32, 3, stride=2, padding=1),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            spconv.SubMConv3d(32,
+            spconv.pytorch.SubMConv3d(32,
                               32,
                               3,
                               indice_key="subm3",
-                              padding=1,
-                              use_hash=False),
+                              padding=1),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            spconv.SparseConv3d(32, 64, 3, stride=2, padding=1,
-                                use_hash=False),
+            spconv.pytorch.SparseConv3d(32, 64, 3, stride=2, padding=1),
             nn.BatchNorm1d(64),
-            nn.ReLU(),
-            spconv.SubMConv3d(64,
+            nn.ReLU(),  
+            spconv.pytorch.SubMConv3d(64,
                               64,
                               3,
                               indice_key="subm4",
-                              padding=1,
-                              use_hash=False),
+                              padding=1),
             nn.BatchNorm1d(64),
             nn.ReLU(),
-            spconv.ToDense()  # [64, 2, 8, 8]
+            spconv.pytorch.ToDense()  # [64, 2, 8, 8]
         )
         self.linear = nn.Linear(64 * 2 * 8 * 8, 4)
 
     def forward(self, features, indices):
         indices = indices.int()
-        x = spconv.SparseConvTensor(features, indices, [16, 64, 64], 2)
+        x = spconv.pytorch.SparseConvTensor(features, indices, [16, 64, 64], 2)
         x = self.net(x)
         x = x.view(2, -1)
         x = self.linear(x)
